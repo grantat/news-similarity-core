@@ -3,3 +3,11 @@ venv/
 # every attribute stored in json format
 __pycache__
 .DS_STORE
+
+# R
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
