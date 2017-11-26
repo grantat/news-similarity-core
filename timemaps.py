@@ -2,6 +2,9 @@ import requests
 import hashlib
 import json
 import os
+import csv
+from datetime import datetime
+from urllib.parse import urlparse
 
 
 def get_timemaps(news_site):
@@ -54,13 +57,52 @@ def count_mementos():
             resp = json.load(f)
             counter = 0
             for uri_m in resp:
-                datetime = uri_m[1]
-                if datetime.startswith("201611"):
+                datetime_val = uri_m[1]
+                if datetime_val.startswith("201611"):
                     counter += 1
             print("URI {} has {} mementos".format(
                 resp["original_uri"], counter))
 
 
+def find_hash_match(hash_val, hash_list):
+    """ Helper function to find uri-r for a given hash """
+    for i in hash_list:
+        if i["hash"] == hash_val:
+            return i["URI-R"]
+
+
+def export_counts():
+    with open("data/hour-counts.csv", 'w') as out:
+        writer = csv.writer(out)
+        # hours = list(range(0, 24))
+        writer.writerow(["uri", "datetime"])
+        for filename in os.listdir("data/timemaps/"):
+            if not filename.endswith(".json"):
+                continue
+
+            with open("data/timemaps/" + filename) as f, \
+                    open('data/news-websites-hashes.json') as f2:
+                resp = json.load(f)
+                hashes = json.load(f2)
+                hash_val = filename[:-5]
+                uri = find_hash_match(hash_val, hashes)
+                netloc = urlparse(uri).netloc
+                counter = 0
+                # skip first entry - data headers
+                for uri_m in resp[1:]:
+                    # skip first item
+                    datetime_val = uri_m[1]
+                    if datetime_val.startswith("201611"):
+                        datetime_val = datetime.strptime(
+                            datetime_val, "%Y%m%d%H%M%S").strftime(
+                            "%Y-%m-%dT%H:%M:%S")
+                        writer.writerow([netloc, datetime_val])
+                        counter += 1
+                print("URI {} has {} mementos".format(
+                    uri, counter))
+
+
 if __name__ == "__main__":
-    get_news_timemaps()
+    # get_news_timemaps()
     # count_mementos()
+    export_counts()
