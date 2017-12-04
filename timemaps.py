@@ -30,7 +30,7 @@ def save_response(news_site, resp, site_hash):
 
 def get_news_timemaps():
     """
-    Get timemaps for websites listed in textfile.
+    Get timemaps for websites listed in textfile save if not already saved
     Save hash pairs to json
     """
     with open('data/news-websites.txt') as f, \
@@ -39,10 +39,14 @@ def get_news_timemaps():
         for news_site in f:
             news_site = news_site.rstrip()
             site_hash = hashlib.md5(news_site.encode()).hexdigest()
+
             pair = {"URI-R": news_site, "hash": site_hash}
             hash_pairs.append(pair)
-
             print("Requesting:", news_site)
+            if os.path.isfile('data/timemaps/' + site_hash + '.json'):
+                print('data/timemaps/' + site_hash +
+                      '.json Already exists delete to replace.')
+                continue
             resp = get_timemaps(news_site)
             save_response(news_site, resp, site_hash)
 
@@ -50,6 +54,7 @@ def get_news_timemaps():
 
 
 def count_mementos():
+    """ Helper function to count mementos from timemap in 11/2016 """
     directory = "data/timemaps/"
     print("For the month of November 2016")
     for filename in os.listdir(directory):
@@ -72,6 +77,7 @@ def find_hash_match(hash_val, hash_list):
 
 
 def export_counts():
+    """ Exports timemap counts to CSV preprocessed for R """
     with open("data/hour-counts.csv", 'w') as out:
         writer = csv.writer(out)
         # hours = list(range(0, 24))
@@ -103,6 +109,6 @@ def export_counts():
 
 
 if __name__ == "__main__":
-    # get_news_timemaps()
+    get_news_timemaps()
     # count_mementos()
     export_counts()
