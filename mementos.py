@@ -42,6 +42,12 @@ def get_news_mementos():
             makedir_if_not_exists("data/mementos/" + site_hash)
             # memento_pairs = []
             # November 1 - 30
+            if os.path.isfile("data/mementos/{}/mementos.json".
+                              format(site_hash)):
+                print("{} already has mementos. Delete folder to download "
+                      "mementos again".format(site_hash))
+                continue
+
             for day in list(range(1, 31)):
                 day = "%02d" % (day,)
                 uri = "http://web.archive.org/web/201611{}010000if_/{}".format(
