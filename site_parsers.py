@@ -56,6 +56,24 @@ class SiteParser:
 
         return ""
 
+    def get_headlines(self, href_selector, splash_text_selector=None,
+                      remove_strings=None):
+        """
+        Helper function to get multiple headline stories
+        """
+        headlines = []
+        elements = self.soup.select(href_selector)
+        for e in elements:
+            temp = {}
+            temp["splash_title"] = e.text.strip()
+            temp["link"] = e["href"]
+            headlines.append(temp)
+            if remove_strings:
+                for s in remove_strings:
+                    temp["splash_title"] = temp["splash_title"].replace(
+                        s, "").strip()
+        return headlines
+
     def washingtonpost(self):
         """ https://www.washingtonpost.com/ """
 
@@ -73,29 +91,16 @@ class SiteParser:
         """ http://abcnews.go.com/ """
         trending_articles = {"hero_text": "", "hero_link": "", "headlines": []}
         try:
-            # `Top Stories` defined by abcnews
-            stories_section = self.soup.find("div", {"id": "row-1"})
-            # trying with select
-            hero_link = self.get_element_attr("div #row-1 picture a", "href")
-            hero_text = self.get_element_text("div #row-1 figcaption h1")
-            print(hero_text, hero_link)
-
             # Hero story - one usually with a bloated image
             # indicating the main story
-            hero_pic = stories_section.find("picture")
-            hero_text = stories_section.find(
-                "figcaption").find("h1").text.strip()
-            hero_link = hero_pic.find("a")["href"]
+            hero_link = self.get_element_attr("div #row-1 picture a", "href")
+            hero_text = self.get_element_text("div #row-1 figcaption h1")
 
             trending_articles["hero_text"] = hero_text
             trending_articles["hero_link"] = hero_link
+            trending_articles["headlines"] = self.get_headlines(
+                "div #row-1 .headlines-li-div a.black-ln")
 
-            stories = stories_section.find_all(
-                "div", {"class": "headlines-li-div"})
-            for tag in stories:
-                links = tag.find_all("a", {"class": "black-ln"})
-                for link in links:
-                    trending_articles["headlines"].append(link["href"])
         except Exception as e:
             print("ABCNEWS::Failed to parse with exception:", e)
 
@@ -139,6 +144,30 @@ class SiteParser:
 
     def nbcnews(self):
         """ https://www.nbcnews.com/ """
+        trending_articles = {"hero_text": "", "hero_link": "", "headlines": []}
+        try:
+            hero_link = self.get_element_attr(
+                ".js-top-stories-content .panel-txt a", "href")
+            hero_text = self.get_element_text(
+                ".js-top-stories-content .panel-txt_overlay a")
+            # print(hero_text, hero_link)
+            trending_articles["hero_text"] = hero_text
+            trending_articles["hero_link"] = hero_link
+
+            type_strings = ["Video\n\n",
+                            "Gallery\n\n", "Data\n\n", "Photo\n\n"]
+            top_stories = self.get_headlines(
+                ".js-top-stories-content div .story-link .media-body > a",
+                remove_strings=type_strings)
+            secondary_stories = self.get_headlines(
+                ".js-top-stories-content div .story-link > a",
+                remove_strings=type_strings)
+            top_stories.extend(secondary_stories)
+            trending_articles["headlines"] = top_stories
+        except Exception as e:
+            print("NBCNEWS::Failed to parse with exception:", e)
+
+        return trending_articles
 
     def latimes(self):
         """ http://www.latimes.com/ """
