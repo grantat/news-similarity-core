@@ -52,6 +52,12 @@ class SiteParser:
 
         return ""
 
+    def add_headline(self, selector):
+        link = self.get_element_attr(selector, "href")
+        title = self.get_element_text(selector)
+        headline = {"splash_title": title, "link": link}
+        self.trending_articles["headlines"].append(headline)
+
     def get_headlines(self, href_selector, soup_selector=False,
                       remove_strings=None):
         """
@@ -194,6 +200,27 @@ class SiteParser:
 
     def npr(self):
         """ https://www.npr.org/ """
+        try:
+            hero_link = self.get_element_attr(
+                ".stories-wrap-featured .story-text "
+                "a[data-metrics*='Click Story 1']", "href")
+            hero_text = self.get_element_text(
+                ".stories-wrap-featured .story-text "
+                "a[data-metrics*='Click Story 1']")
+
+            self.trending_articles["hero_text"] = hero_text
+            self.trending_articles["hero_link"] = hero_link
+
+            # second_story
+            self.add_headline(".stories-wrap-featured .story-text "
+                              "a[data-metrics*='Click Story 2']")
+
+            top_stories = self.get_headlines(".nib-container .item-nib a")
+            self.trending_articles["headlines"] = top_stories
+        except Exception as e:
+            print("LATIMES::Failed to parse with exception:", e)
+
+        return self.trending_articles
 
     def wsj(self):
         """ https://www.wsj.com/ """
