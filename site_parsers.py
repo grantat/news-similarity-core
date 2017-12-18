@@ -216,7 +216,7 @@ class SiteParser:
                               "a[data-metrics*='Click Story 2']")
 
             top_stories = self.get_headlines(".nib-container .item-nib a")
-            self.trending_articles["headlines"] = top_stories
+            self.trending_articles["headlines"].extend(top_stories)
         except Exception as e:
             print("LATIMES::Failed to parse with exception:", e)
 
