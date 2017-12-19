@@ -1,7 +1,32 @@
 from bs4 import BeautifulSoup
 
 
+class Article:
+    """ Article object for each article found """
+
+    def __init__(self, link, text):
+        self.link = link
+        self.text = text
+
+    def set_hero_text(self, hero_text):
+        if not hero_text:
+            hero_text = ""
+        self.trending_articles["hero_text"] = hero_text
+
+    def set_hero_link(self, hero_link):
+        if not hero_link:
+            hero_link = ""
+        self.trending_articles["hero_link"] = hero_link
+
+    def set_headlines(self, headlines):
+        if not headlines:
+            headlines = ""
+        self.trending_articles["headlines"] = headlines
+
+
 class SiteParser:
+    """ Module for parsing news html documents """
+
     def __init__(self, text, trend_limit=10):
         self._trend_limit = trend_limit
         self._text = text
@@ -46,13 +71,17 @@ class SiteParser:
         selector and then return the text
         Returns "" if attribute not found
         """
-        attr = self.soup.select_one(css_selector)[attribute]
+        attr = self.soup.select_one(css_selector)
         if attr:
+            attr = attr[attribute]
             return attr.strip()
 
         return ""
 
     def add_headline(self, selector):
+        """
+        Helper function to add CSS selector element to headlines array
+        """
         link = self.get_element_attr(selector, "href")
         title = self.get_element_text(selector)
         headline = {"splash_title": title, "link": link}
@@ -115,24 +144,23 @@ class SiteParser:
         """ https://www.nytimes.com/ """
 
         try:
-            # `Top Stories` defined by abcnews
-            stories_section = self.soup.find("section", {"id": "top-news"})
-
-            hero_pic = stories_section.find(
-                "div", {"class": "photo-spot-region"})
-            hero_link = hero_pic.find("a")["href"]
-            hero_text = stories_section.find(
-                "figcaption").find("h1").text.strip()
+            hero_link = self.get_element_attr(
+                ".photo-spot-region .story-heading a", "href")
+            hero_text = self.get_element_text(
+                ".photo-spot-region .story-heading a")
 
             self.trending_articles["hero_text"] = hero_text
             self.trending_articles["hero_link"] = hero_link
-
-            stories = stories_section.find_all(
-                "div", {"class": "headlines-li-div"})
-            for tag in stories:
-                links = tag.find_all("a", {"class": "black-ln"})
-                for link in links:
-                    self.trending_articles["headlines"].append(link["href"])
+            # left column stories
+            left_stories = self.get_headlines(
+                "#top-news div.a-column div[class=collection]"
+                " article.story h2.story-heading a")
+            # center stories
+            center_stories = self.get_headlines(
+                "#top-news div.b-column div[class=collection]"
+                " article.story h2.story-heading a")
+            left_stories.extend(center_stories)
+            self.trending_articles["headlines"] = left_stories
         except Exception as e:
             print("NYTIMES::Failed to parse with exception:", e)
 
@@ -143,9 +171,49 @@ class SiteParser:
 
     def usatoday(self):
         """ https://www.usatoday.com/ """
+        try:
+            hero_link = self.get_element_attr(
+                "a.hfwmm-primary-hed-link", "href")
+            hero_text = self.get_element_text(
+                "a.hfwmm-primary-hed-link")
+            self.trending_articles["hero_text"] = hero_text
+            self.trending_articles["hero_link"] = hero_link
+
+            top_stories = self.get_headlines(
+                ".hfwmm-list .js-asset-link")
+            # exception for 09 election day
+            election_stories = self.get_headlines(".tssm-list-link")
+            top_stories.extend(election_stories)
+            self.trending_articles["headlines"] = top_stories
+        except Exception as e:
+            print("USATODAY::Failed to parse with exception:", e)
+
+        return self.trending_articles
 
     def chicagotribune(self):
         """ http://www.chicagotribune.com/ """
+        # .trb_outfit_primaryItem
+
+        # .trb_outfit_list_headline .trb_outfit_list
+        try:
+            hero_link = self.get_element_attr(
+                "h2.trb_outfit_primaryItem_article_title"
+                ".trb_outfit_featuredArticleTitle a", "href")
+            hero_text = self.get_element_text(
+                "h2.trb_outfit_primaryItem_article_title"
+                ".trb_outfit_featuredArticleTitle a")
+
+            self.trending_articles["hero_text"] = hero_text
+            self.trending_articles["hero_link"] = hero_link
+
+            story_list = self.soup.select_one(".trb_outfit_list ")
+            stories = story_list.select(".trb_outfit_list_headline_a")
+            top_stories = self.get_headlines(stories, soup_selector=True)
+            self.trending_articles["headlines"] = top_stories
+        except Exception as e:
+            print("CHICAGOTRIBUNE::Failed to parse with exception:", e)
+
+        return self.trending_articles
 
     def nbcnews(self):
         """ https://www.nbcnews.com/ """
