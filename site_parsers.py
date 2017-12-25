@@ -32,7 +32,7 @@ class SiteParser:
         self._text = text
         # list of parsers to print
         self._parsers = []
-        # aggregated dictionary of all sources
+        # formatted dictionary of single source
         self._trending_articles = {"hero_text": "",
                                    "hero_link": "", "headlines": []}
         self._soup = BeautifulSoup(self.text, 'html.parser')
@@ -93,6 +93,7 @@ class SiteParser:
         Helper function to get multiple headline stories
         """
         headlines = []
+        unique_urls = set()
         # option to pass in a selector
         if soup_selector:
             elements = href_selector
@@ -100,26 +101,91 @@ class SiteParser:
             elements = self.soup.select(href_selector)
         for e in elements:
             temp = {}
+            link = e["href"]
             temp["splash_title"] = e.text.strip()
-            temp["link"] = e["href"]
-            headlines.append(temp)
+            temp["link"] = link
+
             if remove_strings:
                 for s in remove_strings:
                     temp["splash_title"] = temp["splash_title"].replace(
                         s, "").strip()
+
+            if link not in unique_urls:
+                unique_urls.add(link)
+                headlines.append(temp)
         return headlines
 
     def washingtonpost(self):
         """ https://www.washingtonpost.com/ """
+        try:
+            # three possible hero tags
+            possible_heroes = [
+                "section#top-content div[data-chain-name='hp-bignews1']"
+                " div.headline a[data-pb-field='web_headline']",
+                "section#main-content div.headline.x-large "
+                "a[data-pb-field='web_headline']",
+                "section#main-content div.headline.xx-large "
+                "a[data-pb-field='web_headline']"]
+
+            for p in possible_heroes:
+                hero_link = self.get_element_attr(p, "href")
+                hero_text = self.get_element_text(p)
+                if hero_link:
+                    break
+
+            self.trending_articles["hero_text"] = hero_text
+            self.trending_articles["hero_link"] = hero_link
+            possible_headlines = [
+                "section#main-content div[data-chain-name='hp-top-table-main']"
+                " div.headline a[data-pb-field='web_headline']",
+                "section#top-content div[data-chain-name='hp-bignews3']"
+                " div.headline a[data-pb-field='web_headline']"
+            ]
+            for h in possible_headlines:
+                top_stories = self.get_headlines(h)
+                if top_stories:
+                    break
+
+            self.trending_articles["headlines"] = top_stories
+        except Exception as e:
+            print("WASHINGTONPOST::Failed to parse with exception:", e)
+
+        return self.trending_articles
 
     def cbsnews(self):
         """ https://www.cbsnews.com/ """
         try:
-            for tag in self.soup.find_all("div", {"class": "tweets-text"}):
-                print(tag.get("id"), "|", tag.text)
+            # desktop and mobile renders
+            possible_heroes = [
+                "div.module-hero h1.title a",
+                "div.content-primary header div a"
+            ]
 
+            for p in possible_heroes:
+                hero_link = self.get_element_attr(p, "href")
+                hero_text = self.get_element_text(p)
+                if hero_link:
+                    break
+
+            self.trending_articles["hero_text"] = hero_text
+            self.trending_articles["hero_link"] = hero_link
+
+            possible_headlines = [
+                "div.listing-standard-lead li.item-full-lead a",
+                "div[data-tb-region='Hard News'] li[data-tb-region-item] "
+                "a[data-click-tracking]"
+            ]
+            for h in possible_headlines:
+                top_stories = self.get_headlines(h)
+                if top_stories:
+                    break
+
+            # limit to 10 - CBS has a long list not self identifying top ones
+            self.trending_articles["headlines"] = top_stories[:10]
         except Exception as e:
             print("CBSNEWS::Failed to parse with exception", e)
+
+        return self.trending_articles
 
     def abcnews(self):
         """ http://abcnews.go.com/ """
@@ -168,6 +234,23 @@ class SiteParser:
 
     def foxnews(self):
         """ http://www.foxnews.com """
+        try:
+            hero_link = self.get_element_attr(
+                ".primary h1 a", "href")
+            hero_text = self.get_element_text(
+                ".primary h1 a")
+
+            self.trending_articles["hero_text"] = hero_text
+            self.trending_articles["hero_link"] = hero_link
+
+            top_stories = self.get_headlines(
+                ".top-stories li[data-vr-contentbox] > a")
+
+            self.trending_articles["headlines"] = top_stories
+        except Exception as e:
+            print("FOXNEWS::Failed to parse with exception:", e)
+
+        return self.trending_articles
 
     def usatoday(self):
         """ https://www.usatoday.com/ """
@@ -176,13 +259,19 @@ class SiteParser:
                 "a.hfwmm-primary-hed-link", "href")
             hero_text = self.get_element_text(
                 "a.hfwmm-primary-hed-link")
+            # exception 09 election heading
+            if not hero_link:
+                hero_link = self.get_element_attr(
+                    "a.big-headline-primary-href", "href")
+                hero_text = self.get_element_text(
+                    "a.big-headline-primary-href")
             self.trending_articles["hero_text"] = hero_text
             self.trending_articles["hero_link"] = hero_link
 
             top_stories = self.get_headlines(
                 ".hfwmm-list .js-asset-link")
             # exception for 09 election day
-            election_stories = self.get_headlines(".tssm-list-link")
+            election_stories = self.get_headlines("a.tssm-list-link")
             top_stories.extend(election_stories)
             self.trending_articles["headlines"] = top_stories
         except Exception as e:
@@ -192,9 +281,6 @@ class SiteParser:
 
     def chicagotribune(self):
         """ http://www.chicagotribune.com/ """
-        # .trb_outfit_primaryItem
-
-        # .trb_outfit_list_headline .trb_outfit_list
         try:
             hero_link = self.get_element_attr(
                 "h2.trb_outfit_primaryItem_article_title"
@@ -292,3 +378,26 @@ class SiteParser:
 
     def wsj(self):
         """ https://www.wsj.com/ """
+        try:
+            possible_heroes = [
+                "div.lead-story div.LS-SECONDARY-BIG-IMAGE "
+                "a.wsj-headline-link",
+                "div.lead-story h3.LEAD a.wsj-headline-link",
+                "div.lead-story h3.heading-1 a.wsj-headline-link"
+            ]
+            for p in possible_heroes:
+                hero_link = self.get_element_attr(p, "href")
+                hero_text = self.get_element_text(p)
+                if hero_link:
+                    break
+
+            self.trending_articles["hero_text"] = hero_text
+            self.trending_articles["hero_link"] = hero_link
+
+            top_stories = self.get_headlines("div.lead-story "
+                                             "a.wsj-headline-link")
+            self.trending_articles["headlines"].extend(top_stories)
+        except Exception as e:
+            print("WSJ::Failed to parse with exception:", e)
+
+        return self.trending_articles
