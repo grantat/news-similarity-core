@@ -198,9 +198,16 @@ class SiteParser:
 
             self.trending_articles["hero_text"] = hero_text
             self.trending_articles["hero_link"] = hero_link
-            self.trending_articles["headlines"] = self.get_headlines(
-                "div #row-1 .headlines-li-div a.black-ln")
+            possible_headlines = [
+                "div #row-1 .headlines-li-div a.black-ln",
+                ".th-tab-content .headlines-li h1 a"
+            ]
+            for h in possible_headlines:
+                top_stories = self.get_headlines(h)
+                if top_stories:
+                    break
 
+            self.trending_articles["headlines"] = top_stories
         except Exception as e:
             print("ABCNEWS::Failed to parse with exception:", e)
 
