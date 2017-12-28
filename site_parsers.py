@@ -102,8 +102,14 @@ class SiteParser:
         for e in elements:
             temp = {}
             link = e["href"]
-            temp["splash_title"] = e.text.strip()
+            text = e.text.strip()
+            temp["splash_title"] = text
             temp["link"] = link
+
+            # if a headline doesn't have text/title more than
+            # probably not a visible link
+            if not text:
+                continue
 
             if remove_strings:
                 for s in remove_strings:
@@ -225,13 +231,34 @@ class SiteParser:
             self.trending_articles["hero_text"] = hero_text
             self.trending_articles["hero_link"] = hero_link
             # left column stories
-            left_stories = self.get_headlines(
-                "#top-news div.a-column div[class=collection]"
-                " article.story h2.story-heading a")
-            # center stories
-            center_stories = self.get_headlines(
-                "#top-news div.b-column div[class=collection]"
-                " article.story h2.story-heading a")
+            possible_left_stories = [
+                "#top-news .lede-package-region div.a-column "
+                "div[class=collection] article.story h2.story-heading a",
+                "#top-news div.a-column "
+                "div[class=collection] article.story h2.story-heading a"
+            ]
+            possible_center_stories = [
+                "#top-news .lede-package-region div.b-column "
+                "div[class=collection] article.story h2.story-heading a",
+                "#top-news div.b-column "
+                "div[class=collection] article.story h2.story-heading a"
+            ]
+
+            for h in possible_left_stories:
+                left_stories = self.get_headlines(h)
+                if left_stories:
+                    break
+
+            for h in possible_center_stories:
+                center_stories = self.get_headlines(h)
+                if center_stories:
+                    break
+
+            if len(left_stories) >= 5:
+                left_stories = left_stories[:5]
+            if len(center_stories) >= 5:
+                center_stories = center_stories[:5]
+
             left_stories.extend(center_stories)
             self.trending_articles["headlines"] = left_stories
         except Exception as e:
