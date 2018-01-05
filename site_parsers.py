@@ -27,8 +27,12 @@ class Article:
 class SiteParser:
     """ Module for parsing news html documents """
 
-    def __init__(self, text, trend_limit=10):
+    def __init__(self, text, trend_limit=10, left_col_limit=5,
+                 center_col_limit=5):
+        # headline limits
         self._trend_limit = trend_limit
+        self._left_col_limit = left_col_limit
+        self._center_col_limit = center_col_limit
         self._text = text
         # list of parsers to print
         self._parsers = []
@@ -52,6 +56,12 @@ class SiteParser:
     @property
     def trending_articles(self):
         return self._trending_articles
+
+    def set_headlines(self, value):
+        # impose limit
+        if len(value) > self.trend_limit:
+            value = value[:self.trend_limit]
+        self.trending_articles["headlines"] = value
 
     def get_element_text(self, css_selector):
         """
@@ -152,7 +162,7 @@ class SiteParser:
                 if top_stories:
                     break
 
-            self.trending_articles["headlines"] = top_stories
+            self.set_headlines(top_stories)
         except Exception as e:
             print("WASHINGTONPOST::Failed to parse with exception:", e)
 
@@ -186,8 +196,7 @@ class SiteParser:
                 if top_stories:
                     break
 
-            # limit to 10 - CBS has a long list not self identifying top ones
-            self.trending_articles["headlines"] = top_stories[:10]
+            self.set_headlines(top_stories)
         except Exception as e:
             print("CBSNEWS::Failed to parse with exception", e)
 
@@ -213,7 +222,7 @@ class SiteParser:
                 if top_stories:
                     break
 
-            self.trending_articles["headlines"] = top_stories
+            self.set_headlines(top_stories)
         except Exception as e:
             print("ABCNEWS::Failed to parse with exception:", e)
 
@@ -254,13 +263,19 @@ class SiteParser:
                 if center_stories:
                     break
 
-            if len(left_stories) >= 5:
+            # horrible
+            if len(left_stories) > 5 and len(center_stories) > 5:
                 left_stories = left_stories[:5]
-            if len(center_stories) >= 5:
+                center_stories = center_stories[:5]
+            elif len(left_stories) > 5:
+                left_stories = left_stories[:5]
+                if len(center_stories) > 5:
+                    center_stories = center_stories[:5]
+            elif len(center_stories) > 5:
                 center_stories = center_stories[:5]
 
             left_stories.extend(center_stories)
-            self.trending_articles["headlines"] = left_stories
+            self.set_headlines(left_stories)
         except Exception as e:
             print("NYTIMES::Failed to parse with exception:", e)
 
@@ -280,7 +295,7 @@ class SiteParser:
             top_stories = self.get_headlines(
                 ".top-stories li[data-vr-contentbox] > a")
 
-            self.trending_articles["headlines"] = top_stories
+            self.set_headlines(top_stories)
         except Exception as e:
             print("FOXNEWS::Failed to parse with exception:", e)
 
@@ -307,7 +322,7 @@ class SiteParser:
             # exception for 09 election day
             election_stories = self.get_headlines("a.tssm-list-link")
             top_stories.extend(election_stories)
-            self.trending_articles["headlines"] = top_stories
+            self.set_headlines(top_stories)
         except Exception as e:
             print("USATODAY::Failed to parse with exception:", e)
 
@@ -329,7 +344,7 @@ class SiteParser:
             story_list = self.soup.select_one(".trb_outfit_list ")
             stories = story_list.select(".trb_outfit_list_headline_a")
             top_stories = self.get_headlines(stories, soup_selector=True)
-            self.trending_articles["headlines"] = top_stories
+            self.set_headlines(top_stories)
         except Exception as e:
             print("CHICAGOTRIBUNE::Failed to parse with exception:", e)
 
@@ -355,7 +370,7 @@ class SiteParser:
                 ".js-top-stories-content div .story-link > a",
                 remove_strings=type_strings)
             top_stories.extend(secondary_stories)
-            self.trending_articles["headlines"] = top_stories
+            self.set_headlines(top_stories)
         except Exception as e:
             print("NBCNEWS::Failed to parse with exception:", e)
 
@@ -380,7 +395,7 @@ class SiteParser:
                 ".trb_outfit_relatedListTitle_a")
             top_stories = self.get_headlines(top_stories,
                                              soup_selector=True)
-            self.trending_articles["headlines"] = top_stories
+            self.set_headlines(top_stories)
         except Exception as e:
             print("LATIMES::Failed to parse with exception:", e)
 
@@ -404,7 +419,7 @@ class SiteParser:
                               "a[data-metrics*='Click Story 2']")
 
             top_stories = self.get_headlines(".nib-container .item-nib a")
-            self.trending_articles["headlines"].extend(top_stories)
+            self.set_headlines(top_stories)
         except Exception as e:
             print("LATIMES::Failed to parse with exception:", e)
 
@@ -430,7 +445,7 @@ class SiteParser:
 
             top_stories = self.get_headlines("div.lead-story "
                                              "a.wsj-headline-link")
-            self.trending_articles["headlines"].extend(top_stories)
+            self.set_headlines(top_stories)
         except Exception as e:
             print("WSJ::Failed to parse with exception:", e)
 
