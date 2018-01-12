@@ -1,29 +1,6 @@
 from bs4 import BeautifulSoup
 
 
-class Article:
-    """ Article object for each article found """
-
-    def __init__(self, link, text):
-        self.link = link
-        self.text = text
-
-    def set_hero_text(self, hero_text):
-        if not hero_text:
-            hero_text = ""
-        self.trending_articles["hero_text"] = hero_text
-
-    def set_hero_link(self, hero_link):
-        if not hero_link:
-            hero_link = ""
-        self.trending_articles["hero_link"] = hero_link
-
-    def set_headlines(self, headlines):
-        if not headlines:
-            headlines = ""
-        self.trending_articles["headlines"] = headlines
-
-
 class SiteParser:
     """ Module for parsing news html documents """
 
@@ -44,6 +21,14 @@ class SiteParser:
     @property
     def trend_limit(self):
         return self._trend_limit
+
+    @property
+    def left_col_limit(self):
+        return self._left_col_limit
+
+    @property
+    def center_col_limit(self):
+        return self._center_col_limit
 
     @property
     def text(self):
@@ -232,21 +217,30 @@ class SiteParser:
         """ https://www.nytimes.com/ """
 
         try:
-            hero_link = self.get_element_attr(
-                ".photo-spot-region .story-heading a", "href")
-            hero_text = self.get_element_text(
-                ".photo-spot-region .story-heading a")
+            possible_heroes = [".span-ab-top-region h1.story-heading a",
+                               ".photo-spot-region .story-heading a"]
+
+            for p in possible_heroes:
+                hero_link = self.get_element_attr(p, "href")
+                hero_text = self.get_element_text(p)
+                if hero_link:
+                    break
 
             self.trending_articles["hero_text"] = hero_text
             self.trending_articles["hero_link"] = hero_link
             # left column stories
             possible_left_stories = [
+                ".span-abc-region .nythpSpanABC_ABCol .nythpParisMega1stCol "
+                ".story-heading a",
                 "#top-news .lede-package-region div.a-column "
                 "div[class=collection] article.story h2.story-heading a",
                 "#top-news div.a-column "
                 "div[class=collection] article.story h2.story-heading a"
             ]
+            # center column stories
             possible_center_stories = [
+                ".span-abc-region .nythpSpanABC_ABCol "
+                ".nythpSpanABCMiddleColumn .story-heading a",
                 "#top-news .lede-package-region div.b-column "
                 "div[class=collection] article.story h2.story-heading a",
                 "#top-news div.b-column "
@@ -264,15 +258,16 @@ class SiteParser:
                     break
 
             # horrible
-            if len(left_stories) > 5 and len(center_stories) > 5:
-                left_stories = left_stories[:5]
-                center_stories = center_stories[:5]
-            elif len(left_stories) > 5:
-                left_stories = left_stories[:5]
-                if len(center_stories) > 5:
-                    center_stories = center_stories[:5]
-            elif len(center_stories) > 5:
-                center_stories = center_stories[:5]
+            if len(left_stories) > self.left_col_limit and \
+                    len(center_stories) > self.center_col_limit:
+                left_stories = left_stories[:self.left_col_limit]
+                center_stories = center_stories[:self.center_col_limit]
+            elif len(left_stories) > self.left_col_limit:
+                left_stories = left_stories[:self.left_col_limit]
+                if len(center_stories) > self.center_col_limit:
+                    center_stories = center_stories[:self.center_col_limit]
+            elif len(center_stories) > self.center_col_limit:
+                center_stories = center_stories[:self.center_col_limit]
 
             left_stories.extend(center_stories)
             self.set_headlines(left_stories)
@@ -379,12 +374,17 @@ class SiteParser:
     def latimes(self):
         """ http://www.latimes.com/ """
         try:
-            hero_link = self.get_element_attr(
+            possible_heroes = [
                 "section:nth-of-type(1) .trb_outfit_primaryItem "
-                ".trb_outfit_primaryItem_article_title > a", "href")
-            hero_text = self.get_element_text(
-                "section:nth-of-type(1) .trb_outfit_primaryItem "
-                ".trb_outfit_primaryItem_article_title > a")
+                ".trb_outfit_primaryItem_article_title > a",
+                "section[id*='la-data-big-headline'] "
+                "h1.trb_outfit_primaryItem_article_title > a"
+            ]
+            for p in possible_heroes:
+                hero_link = self.get_element_attr(p, "href")
+                hero_text = self.get_element_text(p)
+                if hero_link:
+                    break
 
             self.trending_articles["hero_text"] = hero_text
             self.trending_articles["hero_link"] = hero_link
