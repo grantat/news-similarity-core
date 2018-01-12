@@ -11,3 +11,6 @@ __pycache__
 
 # Session Data files
 .RData
+
+# Publication dir
+docs/pub
