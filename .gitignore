@@ -13,4 +13,4 @@ __pycache__
 .RData
 
 # Publication dir
-docs/pub
+# docs/pub
