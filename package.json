@@ -1,0 +1,11 @@
+{
+  "name": "news-similarity-core",
+  "version": "1.0.0",
+  "description": "Javascript utils used for news similarity paper",
+  "main": "index.js",
+  "repository": "https://github.com/grantat/news-similarity-core",
+  "author": "Grant Atkins",
+  "dependencies": {
+    "puppeteer": "^1.3.0"
+  }
+}
