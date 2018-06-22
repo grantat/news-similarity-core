@@ -86,12 +86,12 @@ def export_counts():
         outfile = "data/mementos-per-month/{}.csv".format(out_mo)
         print("Collecting month {} and saving to {}".format(mo, outfile))
 
-        if os.path.isfile(outfile):
-            continue
+        # if os.path.isfile(outfile):
+        #     continue
         with open(outfile, 'w') as out:
             writer = csv.writer(out)
             # hours = list(range(0, 24))
-            writer.writerow(["uri", "datetime"])
+            writer.writerow(["uri", "datetime", "status_code"])
             for filename in os.listdir("data/timemaps/"):
                 if not filename.endswith(".json"):
                     continue
@@ -108,11 +108,52 @@ def export_counts():
                     for uri_m in resp[1:]:
                         # skip first item
                         datetime_val = uri_m[1]
+                        status_code = uri_m[4]
                         if datetime_val.startswith(mo):
                             datetime_val = datetime.strptime(
                                 datetime_val, "%Y%m%d%H%M%S").strftime(
                                 "%Y-%m-%dT%H:%M:%S")
-                            writer.writerow([netloc, datetime_val])
+                            writer.writerow(
+                                [netloc, datetime_val, status_code])
+                            counter += 1
+                    print("URI {} has {} mementos".format(
+                        uri, counter))
+
+
+def export_count_3months():
+    months = ["201611", "201612", "201701"]
+    outfile = "data/mementos-per-month/3months.csv"
+    with open(outfile, 'w') as out:
+        writer = csv.writer(out)
+        writer.writerow(["uri", "datetime", "status_code"])
+        for mo in months:
+            print("Collecting month {}".format(mo))
+
+            # if os.path.isfile(outfile):
+            #     continue
+            for filename in os.listdir("data/timemaps/"):
+                if not filename.endswith(".json"):
+                    continue
+
+                with open("data/timemaps/" + filename) as f, \
+                        open('data/news-websites-hashes.json') as f2:
+                    resp = json.load(f)
+                    hashes = json.load(f2)
+                    hash_val = filename[:-5]
+                    uri = find_hash_match(hash_val, hashes)
+                    netloc = urlparse(uri).netloc
+                    counter = 0
+                    # skip first entry - data headers
+                    for uri_m in resp[1:]:
+                        # skip first item
+                        datetime_val = uri_m[1]
+                        status_code = uri_m[4]
+                        if datetime_val.startswith(mo):
+                            datetime_val = datetime.strptime(
+                                datetime_val, "%Y%m%d%H%M%S").strftime(
+                                "%Y-%m-%dT%H:%M:%S")
+                            writer.writerow(
+                                [netloc, datetime_val, status_code])
                             counter += 1
                     print("URI {} has {} mementos".format(
                         uri, counter))
@@ -121,4 +162,5 @@ def export_counts():
 if __name__ == "__main__":
     # get_news_timemaps()
     # count_mementos()
-    export_counts()
+    # export_counts()
+    export_count_3months()
