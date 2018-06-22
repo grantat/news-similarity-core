@@ -16,10 +16,10 @@ __pycache__
 # docs/pub
 
 # ACM latex ignore
-acmart.cls
 acmart.pdf
 acmguide.pdf
 sample-*.pdf
+*.synctex.gz
 *.log
 *.aux
 *.cfg
@@ -45,3 +45,9 @@ sample-*.pdf
 *~
 *.bcf
 *.run.xml
+
+# vscode
+.vscode
+
+# nodejs
+node_modules/
