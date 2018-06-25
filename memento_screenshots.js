@@ -9,7 +9,7 @@ const url = require('url');
 const crypto = require('crypto');
 
 if (process.argv.length < 4) {
-    console.error('Usage: node screenshot.js {DATE(Y-m-d)} {OUT_DIRECTORY}');
+    console.error('Usage: node memento_screenshot.js {DATE(Y-m-d)} {OUT_DIRECTORY}');
     console.error('\nWhen specifiying the date argument remember that the stories were collected from approximately 1AM GMT (8PM ET). \nFor example, December 26, 2016 at 1 AM GMT is actually December 25, 2016 at 8 PM ET.');
     process.exit(1);
 }
