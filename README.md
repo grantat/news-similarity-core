@@ -12,7 +12,7 @@ To setup this repository and retrieve the data before running of the scripts run
 
 ```shell
 $ git clone https://github.com/grantat/news-similarity-core
-$ pip3 install requirements
+$ pip3 install -r requirements
 ```
 
 For nodejs requirements:
