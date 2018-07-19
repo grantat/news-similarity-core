@@ -1,6 +1,6 @@
-# News Similarity Core - Research Code
+# News Similarity Core
 
-Research code associated with @oduwsdl group's News Similarity Project.
+Scripts associated with @oduwsdl group's News Similarity Project.
 
 ## Site parsers
 
