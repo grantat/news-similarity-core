@@ -13,7 +13,7 @@ __pycache__
 .RData
 
 # Publication dir
-# docs/pub
+docs/
 
 # ACM latex ignore
 acmart.pdf
@@ -45,6 +45,7 @@ sample-*.pdf
 *~
 *.bcf
 *.run.xml
+*.bib
 
 # vscode
 .vscode
