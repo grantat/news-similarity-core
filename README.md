@@ -40,9 +40,9 @@ Steps to collect data:
     $ docker run -it --rm -v $(pwd)/data:data/ --net="host" dockername python3 colSim.py --k_val="k10" links_per_day_dir/ outputDir/
     ```
 
-If the `data` directory is already downloaded, visualizations are generated using R:
+If the `data` directory is already downloaded, visualizations can be generated using R:
 - `memento_time_diff.R` looks at the time differences between the selected memento and the target time (e.g. 1AM GMT)
-- `memento-heatmap.R` shows memento times based on a 24 hour period as a heatmap - helps in choosing which hour has the most mementos between sites
+- `memento_heatmap.R` shows memento times based on a 24 hour period as a heatmap - helps in choosing which hour has the most mementos between sites
 - `col_sim.R` visualizes news similarity values as either line graphs or bar charts for a month
 
 If a user desires to take screenshots of mementos in their `data` directory you can utilize the Nodejs `memento_screenshots.js`.
