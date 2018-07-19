@@ -51,15 +51,15 @@ make_plots <- function(dt, plot_title){
   dailyMementos <- as.data.frame(table(dt$uri, dt$hour))
   names(dailyMementos) <- c('uri', 'Hour', 'Freq')
   dailyMementos$Hour <- as.numeric(as.character(dailyMementos$Hour))
-  dailyMementos$uri <- factor(dailyMementos$uri,  
+  dailyMementos$uri <- factor(dailyMementos$uri,
                               levels = unique(dt$uri))
   # Plotting the number of crimes each day (line graph)
   # linechart <- ggplot(dailyMementos, aes(x = Hour, y = Freq)) + geom_line(aes(group = uri, color = uri)) + xlab('Hour') + ylab('Number of Mementos') + theme(plot.title = element_text(hjust = 0.5)) + ggtitle(plot_title)
   # print(linechart)
   # auto generate graph
   hmap <- ggplot(dailyMementos, aes(x = Hour, y = uri)) + geom_tile(aes(fill = Freq)) +
-    scale_fill_gradient(name = 'Mementos created', low = 'white', high = 'red') + 
-    theme(axis.title.y = element_blank(), plot.title = element_text(hjust = 0.5)) + 
+    scale_fill_gradient(name = 'Mementos created', low = 'white', high = 'red') +
+    theme(axis.title.y = element_blank(), plot.title = element_text(hjust = 0.5)) +
     # scale_x_discrete(labels = c("0" = "12AM", "5" = "5AM", "10" = "10AM", "15" = "3PM", "20" = "8PM")) +
     scale_x_continuous(breaks=c(0,5,10,15,20), labels=c("12AM", "5AM", "10AM", "3PM", "8PM")) +
     ggtitle(plot_title)
@@ -84,15 +84,15 @@ for(i in 1:length(file.names)){
 }
 # dev.off()
 
-# 
+#
 # Stats per months
-# 
+#
 temp <- read.csv("./data/mementos-per-month/3months.csv")
 temp <- format_data(temp)
 temp <- subset(temp, month == "November" | month == "December" | month == "January")
 dailyMementos <- make_plots(temp, "")
 avg_times(dailyMementos)
-# 
+#
 # for(i in unique(temp$uri)){
 #   cat(paste("URI",i,"&",sum(temp$uri == i),"\n"))
 # }
