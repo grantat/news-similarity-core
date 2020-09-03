@@ -6,6 +6,6 @@
   "repository": "https://github.com/grantat/news-similarity-core",
   "author": "Grant Atkins",
   "dependencies": {
-    "puppeteer": "^1.3.0"
+    "puppeteer": "^1.13.0"
   }
 }
